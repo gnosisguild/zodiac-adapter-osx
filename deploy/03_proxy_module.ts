@@ -4,7 +4,7 @@ import { HardhatRuntimeEnvironment } from "hardhat/types"
 
 import { createFactory, deployModAsProxy } from "../factories/moduleProxyFactory"
 
-import MODULE_CONTRACT_ARTIFACT from "../artifacts/contracts/MyModule.sol/MyModule.json"
+import MODULE_CONTRACT_ARTIFACT from "../artifacts/contracts/OSXAdapter.sol/OSXAdapter.json"
 
 const deploy: DeployFunction = async function ({
   deployments,
@@ -12,14 +12,14 @@ const deploy: DeployFunction = async function ({
   ethers,
   getChainId,
 }: HardhatRuntimeEnvironment) {
-  console.log("Deploying MyModule Proxy")
+  console.log("Deploying OSXAdapter Proxy")
   const { deployer: deployerAddress } = await getNamedAccounts()
   const deployer = await ethers.getSigner(deployerAddress)
 
   const buttonDeployment = await deployments.get("Button")
   const testAvatarDeployment = await deployments.get("TestAvatar")
 
-  const myModuleMastercopyDeployment = await deployments.get("MyModuleMastercopy")
+  const myModuleMastercopyDeployment = await deployments.get("OSXAdapterMastercopy")
 
   /// const chainId = await getChainId()
   // const network: SupportedNetworks = Number(chainId)
@@ -37,30 +37,30 @@ const deploy: DeployFunction = async function ({
     factory,
     myModuleMastercopyDeployment.address,
     {
-      values: [testAvatarDeployment.address, buttonDeployment.address],
-      types: ["address", "address"],
+      values: [testAvatarDeployment.address, testAvatarDeployment.address, testAvatarDeployment.address],
+      types: ["address", "address", "address"],
     },
     ZeroHash,
   )
   const deploymentTransaction = await deployer.sendTransaction(transaction)
   const receipt = (await deploymentTransaction.wait())!
   const myModuleProxyAddress = receipt.logs[1].address
-  console.log("MyModule minimal proxy deployed to:", myModuleProxyAddress)
+  console.log("OSXAdapter minimal proxy deployed to:", myModuleProxyAddress)
 
-  deployments.save("MyModuleProxy", {
+  deployments.save("OSXAdapterProxy", {
     abi: MODULE_CONTRACT_ARTIFACT.abi,
     address: myModuleProxyAddress,
   })
 
-  // Enable MyModule as a module on the safe to give it access to the safe's execTransactionFromModule() function
+  // Enable OSXAdapter as a module on the safe to give it access to the safe's execTransactionFromModule() function
   const testAvatarContract = await ethers.getContractAt("TestAvatar", testAvatarDeployment.address, deployer)
   const currentActiveModule = await testAvatarContract.module()
   if (currentActiveModule !== myModuleProxyAddress) {
     const tx = await testAvatarContract.enableModule(myModuleProxyAddress)
     tx.wait()
-    console.log("MyModule proxy enabled on the TestAvatar")
+    console.log("OSXAdapter proxy enabled on the TestAvatar")
   } else {
-    console.log("MyModule proxy already enabled on the TestAvatar")
+    console.log("OSXAdapter proxy already enabled on the TestAvatar")
   }
 }
 

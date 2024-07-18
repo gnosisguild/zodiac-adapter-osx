@@ -3,7 +3,7 @@ import { DeployFunction } from "hardhat-deploy/types"
 import { HardhatRuntimeEnvironment } from "hardhat/types"
 import { createFactory, deployViaFactory } from "../factories/eip2470"
 
-import MODULE_CONTRACT_ARTIFACT from "../artifacts/contracts/MyModule.sol/MyModule.json"
+import MODULE_CONTRACT_ARTIFACT from "../artifacts/contracts/OSXAdapter.sol/OSXAdapter.json"
 
 const FirstAddress = "0x0000000000000000000000000000000000000001"
 
@@ -14,12 +14,12 @@ const deploy: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   await createFactory(deployer)
 
-  const MyModule = await ethers.getContractFactory("MyModule")
-  const tx = await MyModule.getDeployTransaction(FirstAddress, FirstAddress)
+  const OSXAdapter = await ethers.getContractFactory("OSXAdapter")
+  const tx = await OSXAdapter.getDeployTransaction(FirstAddress, FirstAddress, FirstAddress)
 
   const mastercopy = await deployViaFactory({ bytecode: tx.data, salt: ZeroHash }, deployer)
 
-  hre.deployments.save("MyModuleMastercopy", {
+  hre.deployments.save("OSXAdapterMastercopy", {
     abi: MODULE_CONTRACT_ARTIFACT.abi,
     address: mastercopy,
   })

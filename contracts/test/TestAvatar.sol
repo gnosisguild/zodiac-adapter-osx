@@ -12,11 +12,7 @@ contract TestAvatar {
         module = _module;
     }
 
-    function exec(
-        address payable to,
-        uint256 value,
-        bytes calldata data
-    ) external {
+    function exec(address payable to, uint256 value, bytes calldata data) external {
         bool success;
         bytes memory response;
         (success, response) = to.call{value: value}(data);

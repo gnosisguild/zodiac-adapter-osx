@@ -9,7 +9,22 @@ import "hardhat-deploy"
 dotenv.config()
 
 const config: HardhatUserConfig = {
-  solidity: "0.8.22",
+  solidity: {
+    version: "0.8.26",
+    settings: {
+      metadata: {
+        // Not including the metadata hash
+        bytecodeHash: "none",
+      },
+      // Disable the optimizer when debugging
+      // https://hardhat.org/hardhat-network/#solidity-optimizer-support
+      optimizer: {
+        enabled: true,
+        runs: 800,
+      },
+      viaIR: true,
+    },
+  },
   networks: {
     goerli: {
       url: process.env.GOERLI_URL || "",
