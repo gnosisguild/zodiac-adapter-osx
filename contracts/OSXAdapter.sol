@@ -40,6 +40,8 @@ contract OSXAdapter is Modifier {
         Enum.Operation operation
     ) public override returns (bool success) {
         success = exec(to, value, data, operation);
+        address signer = sentOrSignedByModule();
+        emit ExecutionFromModuleSuccess(signer);
     }
 
     function execTransactionFromModuleReturnData(
@@ -49,6 +51,8 @@ contract OSXAdapter is Modifier {
         Enum.Operation operation
     ) public override returns (bool success, bytes memory returnData) {
         (success, returnData) = execAndReturnData(to, value, data, operation);
+        address signer = sentOrSignedByModule();
+        emit ExecutionFromModuleSuccess(signer);
     }
 
     function setTransactionUnwrapper(
