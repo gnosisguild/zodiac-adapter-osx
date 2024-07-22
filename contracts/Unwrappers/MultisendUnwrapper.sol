@@ -100,7 +100,7 @@ contract MultisendUnwrapper is ITransactionUnwrapper {
             uint256 size = uint256(bytes32(data[offset:]));
             offset += 32;
 
-            result[i].data = bytes(data[offset:size]);
+            result[i].data = bytes(data[offset:offset + size]);
 
             offset += size;
 

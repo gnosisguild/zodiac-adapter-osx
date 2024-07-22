@@ -54,6 +54,12 @@ const deploy: DeployFunction = async function ({
     const tx = await mockOSXDAOContract.grantExecutePermission(OSXAdapterProxyAddress)
     tx.wait()
   }
+
+  // Set Multisend unwrapper
+  const multisend = await deployments.get("MultiSend")
+  const multisendUnwrapperDeployment = await deployments.get("MultisendUnwrapper")
+  const OSXAdapterProxy = await ethers.getContractAt("OSXAdapter", OSXAdapterProxyAddress, deployer)
+  await OSXAdapterProxy.setTransactionUnwrapper(multisend.address, multisendUnwrapperDeployment.address)
 }
 
 deploy.tags = ["moduleProxy"]

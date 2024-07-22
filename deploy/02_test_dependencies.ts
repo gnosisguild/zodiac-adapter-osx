@@ -19,6 +19,10 @@ const deploy: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     from: deployerAddress,
   })
 
+  const multisendContract = await deploy("MultiSend", {
+    from: deployerAddress,
+  })
+
   // Make the MockOSXDAO the owner of the button
   const buttonContract = await ethers.getContractAt("Button", buttonDeployment.address, deployer)
   const currentOwner = await buttonContract.owner()

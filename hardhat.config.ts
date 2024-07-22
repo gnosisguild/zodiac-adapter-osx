@@ -33,7 +33,7 @@ const config: HardhatUserConfig = {
   },
   namedAccounts: {
     deployer: 0,
-    dependenciesDeployer: 1,
+    user: 1,
     tester: 2,
   },
   gasReporter: {
