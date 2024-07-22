@@ -46,7 +46,7 @@ describe("OSXAdapter", function () {
     })
   })
 
-  describe("exec()", function () {
+  describe("execTransactionFromModule()", function () {
     it("Should revert if called by an account that is not enabled as a module", async function () {
       const { OSXAdapterProxyContract, tester, txData } = await setup()
       const testSigner = await ethers.getSigner(tester)
@@ -61,7 +61,7 @@ describe("OSXAdapter", function () {
         .to.be.revertedWithCustomError(OSXAdapterProxyContract, "NotAuthorized")
         .withArgs(tester)
     })
-    it("Should revert if included calls fail", async function () {
+    it("Should revert if any included calls fail", async function () {
       const { OSXAdapterProxyContract, multisend, tester, txData } = await setup()
       const testSigner = await ethers.getSigner(tester)
       const multiSend = multisend.getFunction("multiSend")
@@ -122,42 +122,113 @@ describe("OSXAdapter", function () {
     })
   })
 
-  describe("execAndReturnData()", function () {
-    it("Should revert if called by an account that is not enabled as a module")
-    it("Should revert if any included calls fail")
-    it("Should return true if all included calls execute successfully")
-    it("Should return any data returned by the executed calls")
-    it("Should emit `ExecutionFromModuleSuccess` with correct args")
-  })
-
-  describe("execTransactionFromModule()", function () {
-    it("Should call exec()")
-    it("Should return true if exec() call is successful")
-  })
-
   describe("execTransactionFromModuleReturnData()", function () {
-    it("Should call execAndReturnData()")
-    it("Should return true if execAndReturnData() call is successful")
-    it("Should return returnData from successful execAndReturnData() call")
+    it("Should revert if called by an account that is not enabled as a module", async function () {
+      const { OSXAdapterProxyContract, tester, txData } = await setup()
+      const testSigner = await ethers.getSigner(tester)
+      expect(
+        await OSXAdapterProxyContract.connect(testSigner).execTransactionFromModuleReturnData(
+          txData.to,
+          txData.value,
+          txData.data,
+          txData.operation,
+        ),
+      )
+        .to.be.revertedWithCustomError(OSXAdapterProxyContract, "NotAuthorized")
+        .withArgs(tester)
+    })
+    it("Should revert if any included calls fail", async function () {
+      const { OSXAdapterProxyContract, multisend, tester, txData } = await setup()
+      const multiSend = multisend.getFunction("multiSend")
+      const multisendTx = (
+        await multiSend.populateTransaction(encodeMultisendPayload([txData, { ...txData, data: "0xbaddda7a" }]))
+      ).data as string
+      await expect(
+        OSXAdapterProxyContract.execTransactionFromModuleReturnData(
+          await multisend.getAddress(),
+          txData.value,
+          multisendTx,
+          1,
+        ),
+      ).to.be.reverted
+    })
+    it("Should return true if all included calls execute successfully", async function () {
+      const { OSXAdapterProxyContract, multisend, deployer, txData } = await setup()
+      const multiSend = multisend.getFunction("multiSend")
+      const multisendTx = (await multiSend.populateTransaction(encodeMultisendPayload([txData, txData]))).data as string
+      const func = OSXAdapterProxyContract.getFunction("execTransactionFromModuleReturnData")
+      const result = await func.staticCall(await multisend.getAddress(), 0, multisendTx, 1)
+      expect(result.success).to.be.true
+    })
+    it("Should return any data returned by the executed calls", async function () {
+      const { OSXAdapterProxyContract, multisend, deployer } = await setup()
+
+      const txData = {
+        to: await OSXAdapterProxyContract.getAddress(),
+        value: 0,
+        data: OSXAdapterProxyContract.interface.encodeFunctionData("owner"),
+        operation: 0,
+      }
+
+      const multiSend = multisend.getFunction("multiSend")
+      const multisendTx = (await multiSend.populateTransaction(encodeMultisendPayload([txData, txData]))).data as string
+      const func = OSXAdapterProxyContract.getFunction("execTransactionFromModuleReturnData")
+      const result = await func.staticCall(await multisend.getAddress(), 0, multisendTx, 1)
+      const decodedResult = ethers.AbiCoder.defaultAbiCoder().decode(["bytes[]"], result.returnData)
+      expect(decodedResult).to.deep.equal([[deployer, deployer]])
+    })
+    it("Should emit `ExecutionFromModuleSuccess` with correct args", async function () {
+      const { OSXAdapterProxyContract, multisend, deployer } = await setup()
+
+      const txData = {
+        to: await OSXAdapterProxyContract.getAddress(),
+        value: 0,
+        data: OSXAdapterProxyContract.interface.encodeFunctionData("owner"),
+        operation: 0,
+      }
+
+      const multiSend = multisend.getFunction("multiSend")
+      const multisendTx = (await multiSend.populateTransaction(encodeMultisendPayload([txData, txData]))).data as string
+      expect(
+        await OSXAdapterProxyContract.execTransactionFromModuleReturnData(
+          await multisend.getAddress(),
+          0,
+          multisendTx,
+          1,
+        ),
+      )
+        .to.emit(OSXAdapterProxyContract, "ExecutionFromModuleSuccess")
+        .withArgs(deployer)
+    })
   })
 
   describe("setTransactionUnwrapper()", function () {
-    it("Should revert if called by account other than `owner`")
-    it("Should revert with TransactionUnwrapperAlreadySet() if duplicate address is given")
-    it("Should correctly set the give transaction unwrapper address")
-    it("Should emit `TransactionUnwaperSet` with correct args")
-  })
-
-  describe("Convert()", function () {
-    it("Should revert with `DelegateCallNotAllowed` if operation is delegate call")
-    it("Should encode call params in into Action struct")
-  })
-
-  describe("ConvertTransaction()", function () {
-    it(
-      "Should revert with `UnwrapperNotAllowed` if operation is delegate call and target is not enabled as a transaction unwrapper",
-    )
-    it("Should convert a single encoded call")
-    it("Should convert multiple encoded calls")
+    it("Should revert if called by account other than `owner`", async function () {
+      const { OSXAdapterProxyContract, tester } = await setup()
+      const testSigner = await ethers.getSigner(tester)
+      expect(
+        OSXAdapterProxyContract.connect(testSigner).setTransactionUnwrapper(tester, tester),
+      ).to.be.revertedWithCustomError(OSXAdapterProxyContract, "NotAuthorized")
+    })
+    it("Should revert with TransactionUnwrapperAlreadySet() if duplicate address is given", async function () {
+      const { OSXAdapterProxyContract, multisend, multisendUnwrapperDeployment, deployer } = await setup()
+      expect(
+        OSXAdapterProxyContract.setTransactionUnwrapper(
+          await multisend.getAddress(),
+          multisendUnwrapperDeployment.address,
+        ),
+      ).to.be.revertedWithCustomError(OSXAdapterProxyContract, "TransactionUnwrapperAlreadySet")
+    })
+    it("Should correctly set the give transaction unwrapper address", async function () {
+      const { OSXAdapterProxyContract, multisend, deployer } = await setup()
+      expect(await OSXAdapterProxyContract.setTransactionUnwrapper(await multisend.getAddress(), deployer))
+      expect(await OSXAdapterProxyContract.transactionUnwrappers(await multisend.getAddress())).to.equal(deployer)
+    })
+    it("Should emit `TransactionUnwaperSet` with correct args", async function () {
+      const { OSXAdapterProxyContract, multisend, deployer } = await setup()
+      expect(await OSXAdapterProxyContract.setTransactionUnwrapper(await multisend.getAddress(), deployer))
+        .to.emit(OSXAdapterProxyContract, "TransactionUnwaperSet")
+        .withArgs(await multisend.getAddress(), deployer)
+    })
   })
 })
