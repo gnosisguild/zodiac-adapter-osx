@@ -19,12 +19,9 @@ contract MockOSXDAO {
         permissions[recipient][EXECUTE_PERMISSION_ID] = true;
     }
 
-    function execute(
-        bytes32,
-        Action[] memory actions,
-        uint256
-    ) external returns (bytes[] memory responses, uint256 failureMap) {
+    function execute(bytes32, Action[] memory actions, uint256) external returns (bytes[] memory, uint256 failureMap) {
         require(permissions[msg.sender][EXECUTE_PERMISSION_ID], NotAuthorized(msg.sender));
+        bytes[] memory responses = new bytes[](actions.length);
 
         bool success;
         for (uint i = 0; i < actions.length; i++) {
@@ -38,5 +35,6 @@ contract MockOSXDAO {
         }
 
         failureMap = 0;
+        return (responses, failureMap);
     }
 }

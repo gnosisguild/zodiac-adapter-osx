@@ -71,7 +71,7 @@ contract OSXAdapter is Modifier {
         uint256 value,
         bytes memory data,
         Enum.Operation operation
-    ) internal override moduleOnly returns (bool success) {
+    ) internal override returns (bool success) {
         Action[] memory actions = convertTransaction(to, value, data, operation);
         IOSx(target).execute(bytes32(0), actions, 0);
         success = true;
@@ -99,7 +99,7 @@ contract OSXAdapter is Modifier {
         uint256 value,
         bytes memory data,
         Enum.Operation operation
-    ) private view returns (Action[] memory actions) {
+    ) private view returns (Action[] memory) {
         if (operation == Enum.Operation.DelegateCall) {
             ITransactionUnwrapper transactionUnwrapper = transactionUnwrappers[to];
             require(transactionUnwrapper != ITransactionUnwrapper(address(0)), MultisendAddressNotAllowed());
@@ -111,6 +111,8 @@ contract OSXAdapter is Modifier {
                 operation
             );
 
+            Action[] memory actions = new Action[](unwrappedTransactions.length);
+
             for (uint i = 0; i < unwrappedTransactions.length; i++) {
                 actions[i] = convert(
                     unwrappedTransactions[i].to,
@@ -119,8 +121,11 @@ contract OSXAdapter is Modifier {
                     unwrappedTransactions[i].operation
                 );
             }
+            return actions;
         } else {
+            Action[] memory actions = new Action[](1);
             actions[0] = convert(to, value, data, operation);
+            return actions;
         }
     }
 
