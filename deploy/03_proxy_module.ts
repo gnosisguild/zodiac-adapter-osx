@@ -12,7 +12,6 @@ const deploy: DeployFunction = async function ({
   ethers,
   getChainId,
 }: HardhatRuntimeEnvironment) {
-  console.log("Deploying OSXAdapter Proxy")
   const { deployer: deployerAddress } = await getNamedAccounts()
   const deployer = await ethers.getSigner(deployerAddress)
 
@@ -28,8 +27,6 @@ const deploy: DeployFunction = async function ({
   //   throw Error("The Module Factory is not deployed on this network. Please deploy it first.")
   // }
 
-  console.log("buttonDeployment.address:", buttonDeployment.address)
-
   // Deploys the ModuleFactory (and the Singleton factory) if it is not already deployed
   const factory = await createFactory(deployer)
   const { transaction } = await deployModAsProxy(
@@ -44,7 +41,6 @@ const deploy: DeployFunction = async function ({
   const deploymentTransaction = await deployer.sendTransaction(transaction)
   const receipt = (await deploymentTransaction.wait())!
   const OSXAdapterProxyAddress = receipt.logs[1].address
-  console.log("OSXAdapter minimal proxy deployed to:", OSXAdapterProxyAddress)
 
   deployments.save("OSXAdapterProxy", {
     abi: MODULE_CONTRACT_ARTIFACT.abi,
@@ -57,9 +53,6 @@ const deploy: DeployFunction = async function ({
   if (!hasPermission) {
     const tx = await mockOSXDAOContract.grantExecutePermission(OSXAdapterProxyAddress)
     tx.wait()
-    console.log("OSXAdapter proxy enabled on the MockOSXDAO")
-  } else {
-    console.log("OSXAdapter proxy already enabled on the MockOSXDAO")
   }
 }
 

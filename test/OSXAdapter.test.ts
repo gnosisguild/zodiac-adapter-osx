@@ -39,11 +39,6 @@ describe("OSXAdapter", function () {
       txData.operation,
     ])
 
-    console.log("Enabled Modules:", enabledModules[1])
-    console.log("Deployer Address:", deployer)
-    console.log("txData:", txData)
-    console.log("tx:", tx)
-
     await OSXAdapterProxyContract.execTransactionFromModule(txData.to, txData.value, txData.data, txData.operation)
 
     expect(await buttonContract.pushes()).to.equal(1)
