@@ -9,7 +9,7 @@ const setup = async () => {
   return { multisendUnwrapper, multisendUnwrapperDeployment, deployer, tester }
 }
 
-describe.only("MultisendUnwrapper", function () {
+describe("MultisendUnwrapper", function () {
   describe("constructor", function () {
     it("Deploys successfully", async function () {
       const { multisendUnwrapperDeployment } = await setup()
