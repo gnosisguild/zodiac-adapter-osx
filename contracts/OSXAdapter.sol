@@ -30,6 +30,7 @@ contract OSXAdapter is Modifier {
         __Ownable_init(msg.sender);
         setAvatar(_avatar);
         setTarget(_target);
+        setupModules();
         transferOwnership(_owner);
     }
 
@@ -38,10 +39,10 @@ contract OSXAdapter is Modifier {
         uint256 value,
         bytes calldata data,
         Enum.Operation operation
-    ) public override returns (bool success) {
+    ) public override moduleOnly returns (bool success) {
         success = exec(to, value, data, operation);
-        address signer = sentOrSignedByModule();
-        emit ExecutionFromModuleSuccess(signer);
+        address module = sentOrSignedByModule();
+        emit ExecutionFromModuleSuccess(module);
     }
 
     function execTransactionFromModuleReturnData(
@@ -49,10 +50,10 @@ contract OSXAdapter is Modifier {
         uint256 value,
         bytes calldata data,
         Enum.Operation operation
-    ) public override returns (bool success, bytes memory returnData) {
+    ) public override moduleOnly returns (bool success, bytes memory returnData) {
         (success, returnData) = execAndReturnData(to, value, data, operation);
-        address signer = sentOrSignedByModule();
-        emit ExecutionFromModuleSuccess(signer);
+        address module = sentOrSignedByModule();
+        emit ExecutionFromModuleSuccess(module);
     }
 
     function setTransactionUnwrapper(

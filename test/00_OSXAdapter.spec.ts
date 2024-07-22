@@ -21,6 +21,8 @@ const setup = async () => {
     operation: 0,
   }
 
+  await OSXAdapterProxyContract.enableModule(deployer)
+
   return {
     buttonContract,
     OSXAdapterProxyContract,
@@ -50,8 +52,8 @@ describe("OSXAdapter", function () {
     it("Should revert if called by an account that is not enabled as a module", async function () {
       const { OSXAdapterProxyContract, tester, txData } = await setup()
       const testSigner = await ethers.getSigner(tester)
-      expect(
-        await OSXAdapterProxyContract.connect(testSigner).execTransactionFromModule(
+      await expect(
+        OSXAdapterProxyContract.connect(testSigner).execTransactionFromModule(
           txData.to,
           txData.value,
           txData.data,
@@ -87,13 +89,6 @@ describe("OSXAdapter", function () {
       const { buttonContract, OSXAdapterProxyContract, deployer, multisend, txData } = await setup()
       expect(await buttonContract.pushes()).to.equal(0)
 
-      expect(await OSXAdapterProxyContract.enableModule(deployer))
-
-      const enabledModules = await OSXAdapterProxyContract.getModulesPaginated(
-        "0x0000000000000000000000000000000000000001",
-        10,
-      )
-
       // const multisendTx = encodeMultisendPayload([txData, txData])
       const multiSend = multisend.getFunction("multiSend")
       const multisendTx = (await multiSend.populateTransaction(encodeMultisendPayload([txData, txData]))).data as string
@@ -107,13 +102,6 @@ describe("OSXAdapter", function () {
       const { buttonContract, OSXAdapterProxyContract, deployer, txData } = await setup()
       expect(await buttonContract.pushes()).to.equal(0)
 
-      expect(await OSXAdapterProxyContract.enableModule(deployer))
-
-      const enabledModules = await OSXAdapterProxyContract.getModulesPaginated(
-        "0x0000000000000000000000000000000000000001",
-        10,
-      )
-
       await expect(
         OSXAdapterProxyContract.execTransactionFromModule(txData.to, txData.value, txData.data, txData.operation),
       )
@@ -126,8 +114,8 @@ describe("OSXAdapter", function () {
     it("Should revert if called by an account that is not enabled as a module", async function () {
       const { OSXAdapterProxyContract, tester, txData } = await setup()
       const testSigner = await ethers.getSigner(tester)
-      expect(
-        await OSXAdapterProxyContract.connect(testSigner).execTransactionFromModuleReturnData(
+      await expect(
+        OSXAdapterProxyContract.connect(testSigner).execTransactionFromModuleReturnData(
           txData.to,
           txData.value,
           txData.data,
@@ -189,6 +177,7 @@ describe("OSXAdapter", function () {
 
       const multiSend = multisend.getFunction("multiSend")
       const multisendTx = (await multiSend.populateTransaction(encodeMultisendPayload([txData, txData]))).data as string
+
       await expect(
         OSXAdapterProxyContract.execTransactionFromModuleReturnData(await multisend.getAddress(), 0, multisendTx, 1),
       )
@@ -201,9 +190,9 @@ describe("OSXAdapter", function () {
     it("Should revert if called by account other than `owner`", async function () {
       const { OSXAdapterProxyContract, tester } = await setup()
       const testSigner = await ethers.getSigner(tester)
-      expect(
+      await expect(
         OSXAdapterProxyContract.connect(testSigner).setTransactionUnwrapper(tester, tester),
-      ).to.be.revertedWithCustomError(OSXAdapterProxyContract, "NotAuthorized")
+      ).to.be.revertedWithCustomError(OSXAdapterProxyContract, "OwnableUnauthorizedAccount")
     })
     it("Should revert with TransactionUnwrapperAlreadySet() if duplicate address is given", async function () {
       const { OSXAdapterProxyContract, multisend, multisendUnwrapperDeployment, deployer } = await setup()
