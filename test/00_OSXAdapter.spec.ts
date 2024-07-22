@@ -114,8 +114,8 @@ describe("OSXAdapter", function () {
         10,
       )
 
-      expect(
-        await OSXAdapterProxyContract.execTransactionFromModule(txData.to, txData.value, txData.data, txData.operation),
+      await expect(
+        OSXAdapterProxyContract.execTransactionFromModule(txData.to, txData.value, txData.data, txData.operation),
       )
         .to.emit(OSXAdapterProxyContract, "ExecutionFromModuleSuccess")
         .withArgs(deployer)
@@ -189,13 +189,8 @@ describe("OSXAdapter", function () {
 
       const multiSend = multisend.getFunction("multiSend")
       const multisendTx = (await multiSend.populateTransaction(encodeMultisendPayload([txData, txData]))).data as string
-      expect(
-        await OSXAdapterProxyContract.execTransactionFromModuleReturnData(
-          await multisend.getAddress(),
-          0,
-          multisendTx,
-          1,
-        ),
+      await expect(
+        OSXAdapterProxyContract.execTransactionFromModuleReturnData(await multisend.getAddress(), 0, multisendTx, 1),
       )
         .to.emit(OSXAdapterProxyContract, "ExecutionFromModuleSuccess")
         .withArgs(deployer)
@@ -224,10 +219,10 @@ describe("OSXAdapter", function () {
       expect(await OSXAdapterProxyContract.setTransactionUnwrapper(await multisend.getAddress(), deployer))
       expect(await OSXAdapterProxyContract.transactionUnwrappers(await multisend.getAddress())).to.equal(deployer)
     })
-    it("Should emit `TransactionUnwaperSet` with correct args", async function () {
+    it("Should emit `TransactionUnwrapperSet` with correct args", async function () {
       const { OSXAdapterProxyContract, multisend, deployer } = await setup()
-      expect(await OSXAdapterProxyContract.setTransactionUnwrapper(await multisend.getAddress(), deployer))
-        .to.emit(OSXAdapterProxyContract, "TransactionUnwaperSet")
+      await expect(OSXAdapterProxyContract.setTransactionUnwrapper(await multisend.getAddress(), deployer))
+        .to.emit(OSXAdapterProxyContract, "TransactionUnwrapperSet")
         .withArgs(await multisend.getAddress(), deployer)
     })
   })
