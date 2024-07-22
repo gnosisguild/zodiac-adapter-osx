@@ -14,7 +14,7 @@ contract OSXAdapter is Modifier {
     event TransactionUnwrapperSet(address multisendAddress, ITransactionUnwrapper transactionUnwrapper);
 
     error DelegateCallNotAllowed();
-    error MultisendAddressNotAllowed();
+    error UnwrapperNotAllowed();
     error TransactionUnwrapperAlreadySet();
 
     constructor(address _owner, address _avatar, address _target) {
@@ -102,7 +102,7 @@ contract OSXAdapter is Modifier {
     ) private view returns (Action[] memory) {
         if (operation == Enum.Operation.DelegateCall) {
             ITransactionUnwrapper transactionUnwrapper = transactionUnwrappers[to];
-            require(transactionUnwrapper != ITransactionUnwrapper(address(0)), MultisendAddressNotAllowed());
+            require(transactionUnwrapper != ITransactionUnwrapper(address(0)), UnwrapperNotAllowed());
 
             UnwrappedTransaction[] memory unwrappedTransactions = transactionUnwrapper.unwrap(
                 to,

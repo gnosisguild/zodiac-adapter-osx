@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 pragma solidity >=0.8.26 <0.9.0;
 
-import "./Types.sol";
+import "../Types.sol";
 
-contract MultiSendUnwrapper is ITransactionUnwrapper {
+contract MultisendUnwrapper is ITransactionUnwrapper {
     uint256 private constant OFFSET_START = 68;
 
     error UnsupportedMode();
@@ -29,7 +29,7 @@ contract MultiSendUnwrapper is ITransactionUnwrapper {
 
     function _validateHeader(bytes calldata data) private pure {
         // first 4 bytes are the selector for multiSend(bytes)
-        if (bytes4(data) != IMultiSend.multiSend.selector) {
+        if (bytes4(data) != IMultisend.multiSend.selector) {
             revert MalformedHeader();
         }
 

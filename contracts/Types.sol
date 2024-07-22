@@ -3,7 +3,7 @@ pragma solidity >=0.8.26 <0.9.0;
 
 import "@gnosis.pm/safe-contracts/contracts/common/Enum.sol";
 
-interface IMultiSend {
+interface IMultisend {
     function multiSend(bytes memory transactions) external payable;
 }
 
