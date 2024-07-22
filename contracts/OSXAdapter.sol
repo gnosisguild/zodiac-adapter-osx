@@ -7,9 +7,6 @@ import {IOSx} from "./IOSx.sol";
 import "./Types.sol";
 
 contract OSXAdapter is Modifier {
-    /// @notice The ID of the permission required to call the OSx `execute` function.
-    bytes32 public constant EXECUTE_PERMISSION_ID = keccak256("EXECUTE_PERMISSION");
-
     /// @notice Maps allowed multisend addresses to their corresponding transaction unwrappers.
     /// @dev Delegate calls to mapped addresses will be unwrapped into an array of calls.
     mapping(address multisend => ITransactionUnwrapper transactionUnwrapper) public transactionUnwrappers;
@@ -28,9 +25,9 @@ contract OSXAdapter is Modifier {
     /// @dev Initialize function, will be triggered when a new proxy is deployed
     /// @param initializeParams Parameters of initialization encoded
     function setUp(bytes memory initializeParams) public override initializer {
-        __Ownable_init(msg.sender);
         (address _owner, address _avatar, address _target) = abi.decode(initializeParams, (address, address, address));
 
+        __Ownable_init(msg.sender);
         setAvatar(_avatar);
         setTarget(_target);
         transferOwnership(_owner);
@@ -41,7 +38,7 @@ contract OSXAdapter is Modifier {
         uint256 value,
         bytes calldata data,
         Enum.Operation operation
-    ) public override moduleOnly returns (bool success) {
+    ) public override returns (bool success) {
         success = exec(to, value, data, operation);
     }
 
@@ -50,7 +47,7 @@ contract OSXAdapter is Modifier {
         uint256 value,
         bytes calldata data,
         Enum.Operation operation
-    ) public override moduleOnly returns (bool success, bytes memory returnData) {
+    ) public override returns (bool success, bytes memory returnData) {
         (success, returnData) = execAndReturnData(to, value, data, operation);
     }
 
@@ -74,7 +71,7 @@ contract OSXAdapter is Modifier {
         uint256 value,
         bytes memory data,
         Enum.Operation operation
-    ) internal override returns (bool success) {
+    ) internal override moduleOnly returns (bool success) {
         Action[] memory actions = convertTransaction(to, value, data, operation);
         IOSx(target).execute(bytes32(0), actions, 0);
         success = true;

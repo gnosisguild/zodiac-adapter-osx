@@ -17,9 +17,8 @@ const deploy: DeployFunction = async function ({
   const deployer = await ethers.getSigner(deployerAddress)
 
   const buttonDeployment = await deployments.get("Button")
-  const testAvatarDeployment = await deployments.get("TestAvatar")
-
-  const myModuleMastercopyDeployment = await deployments.get("OSXAdapterMastercopy")
+  const mockOSXDAODeployment = await deployments.get("MockOSXDAO")
+  const OSXAdapterMastercopyDeployment = await deployments.get("OSXAdapterMastercopy")
 
   /// const chainId = await getChainId()
   // const network: SupportedNetworks = Number(chainId)
@@ -35,32 +34,32 @@ const deploy: DeployFunction = async function ({
   const factory = await createFactory(deployer)
   const { transaction } = await deployModAsProxy(
     factory,
-    myModuleMastercopyDeployment.address,
+    OSXAdapterMastercopyDeployment.address,
     {
-      values: [testAvatarDeployment.address, testAvatarDeployment.address, testAvatarDeployment.address],
+      values: [deployerAddress, mockOSXDAODeployment.address, mockOSXDAODeployment.address],
       types: ["address", "address", "address"],
     },
     ZeroHash,
   )
   const deploymentTransaction = await deployer.sendTransaction(transaction)
   const receipt = (await deploymentTransaction.wait())!
-  const myModuleProxyAddress = receipt.logs[1].address
-  console.log("OSXAdapter minimal proxy deployed to:", myModuleProxyAddress)
+  const OSXAdapterProxyAddress = receipt.logs[1].address
+  console.log("OSXAdapter minimal proxy deployed to:", OSXAdapterProxyAddress)
 
   deployments.save("OSXAdapterProxy", {
     abi: MODULE_CONTRACT_ARTIFACT.abi,
-    address: myModuleProxyAddress,
+    address: OSXAdapterProxyAddress,
   })
 
-  // Enable OSXAdapter as a module on the safe to give it access to the safe's execTransactionFromModule() function
-  const testAvatarContract = await ethers.getContractAt("TestAvatar", testAvatarDeployment.address, deployer)
-  const currentActiveModule = await testAvatarContract.module()
-  if (currentActiveModule !== myModuleProxyAddress) {
-    const tx = await testAvatarContract.enableModule(myModuleProxyAddress)
+  // Enable OSXAdapter as a module on the MockOSXDAO to give it access to the execute() function
+  const mockOSXDAOContract = await ethers.getContractAt("MockOSXDAO", mockOSXDAODeployment.address, deployer)
+  let hasPermission = await mockOSXDAOContract.permissions(OSXAdapterProxyAddress, ethers.id("EXECUTE_PERMISSION"))
+  if (!hasPermission) {
+    const tx = await mockOSXDAOContract.grantExecutePermission(OSXAdapterProxyAddress)
     tx.wait()
-    console.log("OSXAdapter proxy enabled on the TestAvatar")
+    console.log("OSXAdapter proxy enabled on the MockOSXDAO")
   } else {
-    console.log("OSXAdapter proxy already enabled on the TestAvatar")
+    console.log("OSXAdapter proxy already enabled on the MockOSXDAO")
   }
 }
 
