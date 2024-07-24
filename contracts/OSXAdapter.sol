@@ -41,8 +41,6 @@ contract OSXAdapter is Modifier {
         Enum.Operation operation
     ) public override moduleOnly returns (bool success) {
         success = exec(to, value, data, operation);
-        address module = sentOrSignedByModule();
-        emit ExecutionFromModuleSuccess(module);
     }
 
     function execTransactionFromModuleReturnData(
@@ -52,8 +50,6 @@ contract OSXAdapter is Modifier {
         Enum.Operation operation
     ) public override moduleOnly returns (bool success, bytes memory returnData) {
         (success, returnData) = execAndReturnData(to, value, data, operation);
-        address module = sentOrSignedByModule();
-        emit ExecutionFromModuleSuccess(module);
     }
 
     function setTransactionUnwrapper(
@@ -77,9 +73,11 @@ contract OSXAdapter is Modifier {
         bytes memory data,
         Enum.Operation operation
     ) internal override returns (bool success) {
+        address module = sentOrSignedByModule();
         Action[] memory actions = convertTransaction(to, value, data, operation);
-        IOSx(target).execute(bytes32(0), actions, 0);
+        IOSx(target).execute(bytes32(abi.encodePacked(module)), actions, 0);
         success = true;
+        emit ExecutionFromModuleSuccess(module);
     }
 
     /// @dev Passes a transaction to be executed by the target and returns data.
@@ -94,8 +92,10 @@ contract OSXAdapter is Modifier {
         bytes memory data,
         Enum.Operation operation
     ) internal override returns (bool, bytes memory) {
+        address module = sentOrSignedByModule();
         Action[] memory actions = convertTransaction(to, value, data, operation);
-        (bytes[] memory returnData, ) = IOSx(target).execute(bytes32(0), actions, 0);
+        (bytes[] memory returnData, ) = IOSx(target).execute(bytes32(abi.encodePacked(module)), actions, 0);
+        emit ExecutionFromModuleSuccess(module);
         return (true, abi.encode(returnData));
     }
 
